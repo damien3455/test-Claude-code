@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compteur de Calories</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>🍽️ Compteur de Calories</h1>
+      <p>Prenez une photo de votre repas pour obtenir ses valeurs nutritionnelles</p>
+    </header>
+
+    <main>
+      <!-- Zone d'upload -->
+      <section class="upload-section">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">📷</div>
+          <p>Prenez une photo ou glissez une image ici</p>
+          <div class="upload-buttons">
+            <label for="cameraInput" class="btn btn-primary">📱 Prendre une photo</label>
+            <label for="fileInput" class="btn btn-secondary">📁 Choisir une image</label>
+          </div>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden />
+          <input type="file" id="fileInput" accept="image/*" hidden />
+        </div>
+
+        <!-- Aperçu image -->
+        <div class="preview-container" id="previewContainer" hidden>
+          <img id="imagePreview" src="" alt="Aperçu du repas" />
+          <div class="preview-actions">
+            <button class="btn btn-primary" id="analyzeBtn">🔍 Analyser</button>
+            <button class="btn btn-outline" id="changeBtn">Changer l'image</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Loader -->
+      <div class="loader" id="loader" hidden>
+        <div class="spinner"></div>
+        <p>Analyse nutritionnelle en cours...</p>
+      </div>
+
+      <!-- Résultats -->
+      <section class="results" id="results" hidden>
+        <div class="results-header">
+          <h2>Résultats nutritionnels</h2>
+        </div>
+
+        <!-- Totaux -->
+        <div class="totals-grid">
+          <div class="total-card calories">
+            <div class="total-icon">🔥</div>
+            <div class="total-value" id="totalCalories">0</div>
+            <div class="total-label">Calories (kcal)</div>
+          </div>
+          <div class="total-card protein">
+            <div class="total-icon">💪</div>
+            <div class="total-value" id="totalProtein">0</div>
+            <div class="total-label">Protéines (g)</div>
+          </div>
+        </div>
+
+        <!-- Détail par aliment -->
+        <div class="food-list">
+          <h3>Détail par aliment</h3>
+          <div id="foodItems"></div>
+        </div>
+
+        <!-- Remarques -->
+        <div class="remarks" id="remarksContainer">
+          <h3>💡 Conseils nutritionnels</h3>
+          <p id="remarksText"></p>
+        </div>
+
+        <!-- Nouvelle analyse -->
+        <button class="btn btn-primary btn-full" id="newAnalysisBtn">Analyser un autre repas</button>
+      </section>
+
+      <!-- Erreur -->
+      <div class="error-box" id="errorBox" hidden>
+        <p id="errorText"></p>
+        <button class="btn btn-outline" id="retryBtn">Réessayer</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
