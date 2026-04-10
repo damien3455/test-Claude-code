@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Compteur de Calories</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      padding-bottom: 2rem;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── SETUP SCREEN ── */
+    #setupScreen {
+      min-height: 100vh;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
+    }
+    #setupScreen.active { display: flex; }
+
+    .setup-card {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem 1.5rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .setup-logo { font-size: 3.5rem; text-align: center; margin-bottom: 1rem; }
+
+    .setup-card h1 {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #2d3748;
+      margin-bottom: 0.4rem;
+    }
+
+    .setup-card p {
+      text-align: center;
+      color: #718096;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .setup-card label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #4a5568;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .setup-card input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-family: monospace;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .setup-card input:focus { border-color: #667eea; }
+
+    .setup-hint {
+      background: #f7fafc;
+      border-radius: 10px;
+      padding: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .setup-hint p {
+      text-align: left;
+      font-size: 0.8rem;
+      color: #718096;
+      margin: 0;
+    }
+
+    .setup-hint a { color: #667eea; text-decoration: none; font-weight: 600; }
+
+    /* ── MAIN SCREEN ── */
+    #mainScreen { padding: 0; }
+
+    header {
+      background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
+      padding: 3rem 1.5rem 2rem;
+      text-align: center;
+      color: white;
+    }
+
+    header h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.3rem; }
+    header p { font-size: 0.85rem; opacity: 0.85; }
+
+    .change-key-btn {
+      margin-top: 0.75rem;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: white;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    main { padding: 1.5rem; }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+
+    .upload-zone .icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
+    .upload-zone p { color: #718096; font-size: 0.9rem; margin-bottom: 1.25rem; }
+
+    .btn-group { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    /* ── PREVIEW ── */
+    .preview-zone {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+
+    #imagePreview {
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .preview-actions {
+      padding: 1rem 1.25rem;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    /* ── LOADER ── */
+    .loader-zone {
+      background: white;
+      border-radius: 20px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+
+    .spinner {
+      width: 52px;
+      height: 52px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-zone p { color: #718096; font-size: 0.9rem; }
+
+    /* ── RESULTS ── */
+    .results-zone { display: flex; flex-direction: column; gap: 1rem; }
+
+    .totals-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .total-card {
+      background: white;
+      border-radius: 20px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    .total-card.cal { border-top: 4px solid #fc8181; }
+    .total-card.prot { border-top: 4px solid #68d391; }
+
+    .total-card .icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
+    .total-card .value { font-size: 2rem; font-weight: 800; color: #2d3748; line-height: 1; }
+    .total-card .unit { font-size: 0.75rem; color: #a0aec0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; }
+
+    .food-card {
+      background: white;
+      border-radius: 20px;
+      padding: 1.25rem;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    .food-card h3 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #a0aec0;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+
+    .food-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f7fafc;
+    }
+
+    .food-item:last-child { border-bottom: none; }
+
+    .food-name { font-weight: 600; color: #2d3748; font-size: 0.95rem; }
+    .food-qty { font-size: 0.78rem; color: #a0aec0; margin-top: 0.1rem; }
+
+    .food-macros { text-align: right; }
+    .food-kcal { font-weight: 700; color: #e53e3e; font-size: 0.92rem; }
+    .food-prot { font-size: 0.78rem; color: #38a169; font-weight: 600; }
+
+    .remarks-card {
+      background: #fffff0;
+      border: 1px solid #f6e05e;
+      border-radius: 20px;
+      padding: 1.25rem;
+    }
+
+    .remarks-card h3 { font-size: 0.9rem; font-weight: 700; color: #744210; margin-bottom: 0.4rem; }
+    .remarks-card p { font-size: 0.85rem; color: #7b6016; line-height: 1.6; }
+
+    /* ── ERROR ── */
+    .error-card {
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
+      border-radius: 20px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .error-card p { color: #c53030; font-size: 0.9rem; margin-bottom: 1rem; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.9rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      transition: opacity 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active { opacity: 0.8; transform: scale(0.98); }
+
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-green { background: linear-gradient(135deg, #48bb78, #38a169); color: white; }
+    .btn-outline { background: white; color: #667eea; border: 2px solid #667eea; }
+    .btn-gray { background: #e2e8f0; color: #4a5568; }
+
+    input[type="file"] { display: none; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ SETUP SCREEN ═══ -->
+  <div id="setupScreen" class="screen active">
+    <div class="setup-card">
+      <div class="setup-logo">🍽️</div>
+      <h1>Compteur de Calories</h1>
+      <p>Entre ta clé API Anthropic pour commencer. Elle sera sauvegardée sur ton téléphone.</p>
+
+      <label>Clé API Anthropic</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off" />
+
+      <div class="setup-hint">
+        <p>Obtiens ta clé gratuite sur <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key</p>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveApiKey()">Commencer →</button>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN SCREEN ═══ -->
+  <div id="mainScreen" class="screen">
+    <header>
+      <h1>🍽️ Compteur de Calories</h1>
+      <p>Prenez une photo de votre repas</p>
+      <button class="change-key-btn" onclick="changeKey()">⚙️ Changer la clé API</button>
+    </header>
+
+    <main>
+
+      <!-- Upload -->
+      <div class="upload-zone" id="uploadZone">
+        <div class="icon">📷</div>
+        <p>Photographiez votre repas pour connaître les calories et protéines</p>
+        <div class="btn-group">
+          <label for="cameraInput" class="btn btn-primary">📱 Prendre une photo</label>
+          <label for="fileInput" class="btn btn-gray">🖼️ Choisir depuis la galerie</label>
+        </div>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFile(this)" />
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this)" />
+      </div>
+
+      <!-- Preview -->
+      <div class="preview-zone hidden" id="previewZone">
+        <img id="imagePreview" src="" alt="Repas" />
+        <div class="preview-actions">
+          <button class="btn btn-green" style="flex:1" onclick="analyze()">🔍 Analyser</button>
+          <button class="btn btn-gray" style="flex:1" onclick="reset()">Changer</button>
+        </div>
+      </div>
+
+      <!-- Loader -->
+      <div class="loader-zone hidden" id="loaderZone">
+        <div class="spinner"></div>
+        <p>Analyse en cours...</p>
+        <p style="font-size:0.78rem;color:#a0aec0;margin-top:0.4rem">Identification des aliments et calcul des valeurs nutritionnelles</p>
+      </div>
+
+      <!-- Erreur -->
+      <div class="error-card hidden" id="errorCard">
+        <p id="errorText"></p>
+        <button class="btn btn-outline" onclick="retry()">Réessayer</button>
+      </div>
+
+      <!-- Résultats -->
+      <div class="results-zone hidden" id="resultsZone">
+
+        <div class="totals-row">
+          <div class="total-card cal">
+            <div class="icon">🔥</div>
+            <div class="value" id="totalCal">0</div>
+            <div class="unit">Calories (kcal)</div>
+          </div>
+          <div class="total-card prot">
+            <div class="icon">💪</div>
+            <div class="value" id="totalProt">0</div>
+            <div class="unit">Protéines (g)</div>
+          </div>
+        </div>
+
+        <div class="food-card">
+          <h3>Détail par aliment</h3>
+          <div id="foodList"></div>
+        </div>
+
+        <div class="remarks-card hidden" id="remarksCard">
+          <h3>💡 Conseils</h3>
+          <p id="remarksText"></p>
+        </div>
+
+        <button class="btn btn-primary" onclick="reset()">📷 Analyser un autre repas</button>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    let currentFile = null;
+
+    // ── Init ──
+    window.onload = () => {
+      const key = localStorage.getItem('anthropic_key');
+      if (key) showMain();
+    };
+
+    function showMain() {
+      document.getElementById('setupScreen').classList.remove('active');
+      document.getElementById('mainScreen').classList.add('active');
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('apiKeyInput').value.trim();
+      if (!key.startsWith('sk-ant')) {
+        alert('Clé invalide. Elle doit commencer par sk-ant-...');
+        return;
+      }
+      localStorage.setItem('anthropic_key', key);
+      showMain();
+    }
+
+    function changeKey() {
+      localStorage.removeItem('anthropic_key');
+      document.getElementById('apiKeyInput').value = '';
+      document.getElementById('mainScreen').classList.remove('active');
+      document.getElementById('setupScreen').classList.add('active');
+    }
+
+    // ── File handling ──
+    function handleFile(input) {
+      const file = input.files[0];
+      if (!file) return;
+      currentFile = file;
+      const url = URL.createObjectURL(file);
+      document.getElementById('imagePreview').src = url;
+      show('previewZone');
+      hide('uploadZone');
+      hide('resultsZone');
+      hide('errorCard');
+    }
+
+    function reset() {
+      currentFile = null;
+      document.getElementById('cameraInput').value = '';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('imagePreview').src = '';
+      show('uploadZone');
+      hide('previewZone');
+      hide('loaderZone');
+      hide('resultsZone');
+      hide('errorCard');
+    }
+
+    function retry() {
+      hide('errorCard');
+      if (currentFile) show('previewZone');
+      else show('uploadZone');
+    }
+
+    // ── Analyze ──
+    async function analyze() {
+      if (!currentFile) return;
+
+      hide('previewZone');
+      hide('resultsZone');
+      hide('errorCard');
+      show('loaderZone');
+
+      const key = localStorage.getItem('anthropic_key');
+      const base64 = await toBase64(currentFile);
+      const mediaType = currentFile.type;
+
+      const prompt = `Tu es un expert en nutrition. Analyse cette photo de repas et fournis une estimation précise.
+
+Réponds UNIQUEMENT avec un JSON valide dans ce format exact (sans texte avant ou après) :
+{
+  "aliments": [
+    {
+      "nom": "nom de l'aliment",
+      "quantite": "estimation de la quantité (ex: 150g, 1 portion)",
+      "calories": nombre,
+      "proteines": nombre
+    }
+  ],
+  "total_calories": nombre,
+  "total_proteines": nombre,
+  "remarques": "conseils nutritionnels courts"
+}
+
+Les valeurs calories et protéines sont des nombres entiers. Les protéines sont en grammes.`;
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 1024,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+                { type: 'text', text: prompt }
+              ]
+            }]
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          if (res.status === 401) {
+            showError('Clé API invalide. Vérifie ta clé dans les paramètres.');
+          } else {
+            showError(err.error?.message || 'Erreur serveur');
+          }
+          return;
+        }
+
+        const data = await res.json();
+        const text = data.content[0].text.trim();
+        const match = text.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error('Réponse invalide');
+        displayResults(JSON.parse(match[0]));
+
+      } catch (e) {
+        showError(e.message || "Une erreur s'est produite. Réessaie.");
+      }
+    }
+
+    function displayResults(data) {
+      hide('loaderZone');
+
+      document.getElementById('totalCal').textContent = data.total_calories ?? 0;
+      document.getElementById('totalProt').textContent = data.total_proteines ?? 0;
+
+      const list = document.getElementById('foodList');
+      list.innerHTML = '';
+      (data.aliments || []).forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'food-item';
+        el.innerHTML = `
+          <div>
+            <div class="food-name">${esc(item.nom)}</div>
+            <div class="food-qty">${esc(item.quantite)}</div>
+          </div>
+          <div class="food-macros">
+            <div class="food-kcal">${item.calories} kcal</div>
+            <div class="food-prot">${item.proteines}g prot.</div>
+          </div>`;
+        list.appendChild(el);
+      });
+
+      const remarksCard = document.getElementById('remarksCard');
+      if (data.remarques) {
+        document.getElementById('remarksText').textContent = data.remarques;
+        remarksCard.classList.remove('hidden');
+      } else {
+        remarksCard.classList.add('hidden');
+      }
+
+      show('resultsZone');
+    }
+
+    function showError(msg) {
+      hide('loaderZone');
+      document.getElementById('errorText').textContent = msg;
+      show('errorCard');
+    }
+
+    // ── Helpers ──
+    function show(id) { document.getElementById(id).classList.remove('hidden'); }
+    function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(str));
+      return d.innerHTML;
+    }
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>
